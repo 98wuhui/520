@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<!-- saved from url=(0020)http://120.48.8.180/ -->
+<html lang="zh-CN"><head>
+    <meta charset="utf-8">
+    <title>新年快乐</title><!-- 这是网页标题 -->
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        .mask {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.3);
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+
+        h1 {
+            color: rgb(255, 255, 255, 1);
+            font-size: 2.4rem;
+        }
+
+        p {
+            color: rgb(255, 255, 255, .9);
+            font-size: 2rem;
+            letter-spacing: 5px;
+        }
+
+        main {
+            position: absolute;
+            top: 20%;
+            left: 40%;
+        }
+
+        body {
+            overflow: hidden;
+            margin: 0;
+        }
+    </style>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.10.6/dayjs.min.js"></script>
+
+<body>
+<div id="h1"></div>
+<canvas></canvas> <!--canvas 画布-->
+<script>
+    const canvas = document.querySelector("canvas"),
+        ctx = canvas.getContext("2d");
+    let ww, wh, mouseMoved = false;
+    ctx.strokeStyle = "red";
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "hsla(120, 100%, 60%,0.5)";
+    const precision = 100, hearts = [];
+
+    function onResize() {
+        ww = canvas.width = window.innerWidth;
+        wh = canvas.height = window.innerHeight;
+    }
+
+    const Heart = function (x, y) {
+        this.x = x || Math.random() * ww;
+        this.y = y || Math.random() * wh;
+        this.size = Math.random() * 2 + 1;
+        this.shadowBlur = Math.random() * 10;
+        this.speedX = (Math.random() + 0.2 - 0.6) * 8;
+        this.speedY = (Math.random() + 0.2 - 0.6) * 8;
+        this.speedSize = Math.random() * 0.05 + 0.01;
+        this.opacity = 1;
+        this.vertices = [];
+        for (let i = 0; i < precision; i++) {
+            const step = (i / precision - 0.5) * (Math.PI * 2);
+            const vector = {
+                x: (15 * Math.pow(Math.sin(step), 3)),
+                y: -(13 * Math.cos(step) - 5 * Math.cos(2 * step) - 2 * Math.cos(3 * step) - Math.cos(4 * step))
+            };
+            this.vertices.push(vector);
+        }
+    };
+
+    function onMove(e) {
+        mouseMoved = true;
+        if (e.type === "touchmove") {
+            hearts.push(new Heart(e.touches[0].clientX, e.touches[0].clientY));
+            hearts.push(new Heart(e.touches[0].clientX, e.touches[0].clientY));
+        } else {
+            hearts.push(new Heart(e.clientX, e.clientY));
+            hearts.push(new Heart(e.clientX, e.clientY));
+        }
+    }
+
+
+    Heart.prototype.draw = function () {
+        this.size -= this.speedSize;
+        this.x += this.speedX;
+        this.y += this.speedY;
+        ctx.save();
+        ctx.translate(-1000, this.y);
+        ctx.scale(this.size, this.size);
+        ctx.beginPath();
+        for (let i = 0; i < precision; i++) {
+            const vector = this.vertices[i];
+            ctx.lineTo(vector.x, vector.y);
+        }
+        ctx.globalAlpha = this.size;
+        ctx.shadowBlur = Math.round((3 - this.size) * 10);
+        ctx.shadowColor = "hsla(0, 100%, 60%,0.5)";
+        ctx.shadowOffsetX = this.x + 1000;
+        ctx.globalCompositeOperation = "screen"
+        ctx.closePath();
+        ctx.fill()
+        ctx.restore();
+    };
+
+
+    function render(a) {
+        requestAnimationFrame(render);
+
+        hearts.push(new Heart())
+        ctx.clearRect(0, 0, ww, wh);
+        for (let i = 0; i < hearts.length; i++) {
+            hearts[i].draw();
+            if (hearts[i].size <= 0) {
+                hearts.splice(i--, 1);
+            }
+        }
+    }
+
+
+    onResize();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("resize", onResize);
+    requestAnimationFrame(render);
+
+    window.onload = function starttime() {
+        time(h1, '2024/1/1');     // 2024年春节时间
+        setTimeout(starttime, 1000); // 添加计时器
+    }
+
+    function time(obj, futimg) {
+        const nowTime = new Date().getTime(); // 现在时间转换为时间戳
+        const futureTime = new Date(futimg).getTime(); // 未来时间转换为时间戳
+        const millisecond = futureTime - nowTime; // 毫秒 未来时间-现在时间
+        let time = (millisecond / 1000);  // 毫秒/1000
+        const day = parseInt(time / 86400); // 天  24*60*60*1000
+        const hour = parseInt(time / 3600) - 24 * day;    // 小时 60*60 总小时数-过去的小时数=现在的小时数
+        const minute = parseInt(time % 3600 / 60); // 分 -(day*24) 以60秒为一整份 取余 剩下秒数 秒数/60 就是分钟数
+        const second = parseInt(time % 60);  // 以60秒为一整份 取余 剩下秒数
+        time = dayjs().format('YYYY-MM-DD')
+        $.ajax({
+            url: 'http://sentence.iciba.com/index.php',
+            dataType: 'jsonp',
+            data: {
+                c: "dailysentence",
+                m: "getdetail",
+                title: time
+            },
+            success(data) {
+                let h1 = $('#h1')
+                let div = $('body')
+                div.css({
+                    background: `url(${data.picture2}) center/cover no-repeat`
+                })
+                h1.html("<div class='mask'></div><main><h1><p>距离春节还有：" + day + "天" + hour + "小时" + minute + "分" + second + "秒</p>" + `${data.content}</h1><p>${data.note}</p></main>`)
+            }
+        })
+        return true;
+    }
+</script>
+<audio id="music" src="https://sharefs.hw.kugou.com/202312092246/aaa4ec72a72c2d3c56c0d0a0870fd821/v3/0e777c707e50edabf6689fdb7c93a2bc/yp/full/a1000_u0_p409_mx564295125_s18483916.mp3" autoplay="autoplay" loop="loop" style="display: block; width: 3%; height:3%;"></audio>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+    function audioAutoPlay() {
+        const audio = document.getElementById('bgmusic');
+        audio.play();
+        document.addEventListener("WeixinJSBridgeReady", function () {
+            audio.play();
+        }, false);
+    }
+    audioAutoPlay();
+	});
+</script>
+
+</body></html>
